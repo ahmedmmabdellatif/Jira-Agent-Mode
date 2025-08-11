@@ -1,4 +1,4 @@
-name: Forge CI/CD (self-healing)
+name: Forge CI/CD
 
 on:
   push:
@@ -9,9 +9,6 @@ concurrency:
   group: forge-cicd-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: write
-
 jobs:
   deploy-install:
     runs-on: ubuntu-latest
@@ -19,7 +16,7 @@ jobs:
     env:
       FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
-      ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }} # e.g. jiraagentmode.atlassian.net
+      ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }}
       SITE_URL: https://${{ secrets.ATLASSIAN_SITE }}
 
     steps:
@@ -37,45 +34,6 @@ jobs:
       - name: Disable Forge CLI analytics (avoid non-TTY prompts)
         run: forge settings set usage-analytics false
 
-      # Self-heal manifest (ensure id + runtime) and commit if needed
-      - name: Ensure app.id and runtime in manifest
-        working-directory: app
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f manifest.yml
-
-          if ! grep -qE '^\s*id:\s*ari:cloud:ecosystem::app/' manifest.yml; then
-            echo "No app.id -> running 'forge register \"Jira Agent Mode\"'..."
-            forge register "Jira Agent Mode"
-          fi
-
-          if ! grep -qE '^\s*runtime:\s*$' manifest.yml; then
-            : # nothing
-          fi
-          if ! grep -qE '^\s*runtime:\s*\n\s*name:\s*nodejs(20|22)\.x' manifest.yml; then
-            awk '
-              { print }
-              END{
-                print ""
-                print "app:"
-                print "  runtime:"
-                print "    name: nodejs20.x"
-              }
-            ' manifest.yml > manifest.tmp && mv manifest.tmp manifest.yml
-          fi
-
-          # Drop deprecated app.name if present
-          perl -0777 -pe 's/\napp:\n(\s*name:.*\n)/\napp:\n/s' -i manifest.yml || true
-
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add manifest.yml
-            git commit -m "ci: ensure Forge app.id and runtime"
-            git push
-          fi
-
       - name: Install dependencies (app)
         working-directory: app
         run: |
@@ -91,7 +49,7 @@ jobs:
         working-directory: app
         run: forge deploy --environment development
 
-      # Confluence: install-or-upgrade
+      # Confluence install (plain, then upgrade if already installed)
       - name: Install on Confluence (development)
         working-directory: app
         shell: bash
@@ -111,7 +69,7 @@ jobs:
             --confirm-scopes \
             --non-interactive
 
-      # Jira: install-or-upgrade (don’t force --upgrade first)
+      # Jira install (required because we request Jira scopes)
       - name: Install on Jira (development)
         working-directory: app
         shell: bash

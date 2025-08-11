@@ -1,0 +1,46 @@
+name: Forge Register (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
+      FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Forge CLI
+        run: npm install -g @forge/cli@latest
+
+      - name: Disable Forge analytics (avoid prompts)
+        run: forge settings set usage-analytics false
+
+      - name: Register Forge app to get app.id
+        working-directory: app
+        run: |
+          # Ensure manifest exists
+          test -f manifest.yml
+          # Register the app under the desired name
+          forge register "Jira Agent Mode"
+          echo "---- manifest after register ----"
+          cat manifest.yml
+
+      - name: Commit updated manifest.yml (with app.id) back to main
+        working-directory: app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.yml
+          git commit -m "chore: add Forge app.id via forge register" || echo "No changes to commit"
+          git push

@@ -1,6 +1,6 @@
 # Status
 
-_Date: 2025-08-11_  
+_Date: 2025-08-11_
 
 ## Current state
 
@@ -12,7 +12,7 @@ _Date: 2025-08-11_
 
 ## Last successful CI run
 
-None yet.
+- Run `f8a895c` (CI run 16880757368) succeeded on 2025-08-11: https://github.com/ahmedmmabdellatif/Jira-Agent-Mode/actions/runs/16880757368
 
 ## Test page URL
 

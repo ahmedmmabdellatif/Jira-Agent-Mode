@@ -17,4 +17,4 @@ None yet.
 
 ## Test page URL
 
-https://jiraagentmode.atlassian.net/wiki/spaces/~712020ca91782c911e4842b2777baf65457e5d/pages/294913/Jira+Agent+Mode+Test
+https://jiraagenassian.net/wiki/spaces/~712020ca91782c911e4842b2777baf65457e5d/pages/294913/Jira+Agent+Mode+Test

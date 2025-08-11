@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write   # needed for the self-heal commit
+  contents: write
 
 jobs:
   deploy-install:
@@ -19,7 +19,8 @@ jobs:
     env:
       FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
-      ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }}
+      ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }} # e.g. jiraagentmode.atlassian.net
+      SITE_URL: https://${{ secrets.ATLASSIAN_SITE }}
 
     steps:
       - name: Checkout
@@ -36,42 +37,36 @@ jobs:
       - name: Disable Forge CLI analytics (avoid non-TTY prompts)
         run: forge settings set usage-analytics false
 
-      # Keep this to auto-fix missing app.id/runtime and commit back
-      - name: Ensure app.id and runtime in manifest (self-heal)
+      # Self-heal manifest (ensure id + runtime) and commit if needed
+      - name: Ensure app.id and runtime in manifest
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
           test -f manifest.yml
 
-          echo "== Before =="
-          sed -n '1,200p' manifest.yml || true
-
           if ! grep -qE '^\s*id:\s*ari:cloud:ecosystem::app/' manifest.yml; then
-            echo "No app.id -> registering app name 'Jira Agent Mode'..."
+            echo "No app.id -> running 'forge register \"Jira Agent Mode\"'..."
             forge register "Jira Agent Mode"
           fi
 
-          if ! grep -qE '^\s*runtime:' manifest.yml; then
+          if ! grep -qE '^\s*runtime:\s*$' manifest.yml; then
+            : # nothing
+          fi
+          if ! grep -qE '^\s*runtime:\s*\n\s*name:\s*nodejs(20|22)\.x' manifest.yml; then
             awk '
-              BEGIN{added=0}
               { print }
               END{
-                if (!added) {
-                  print ""
-                  print "app:"
-                  print "  runtime:"
-                  print "    name: nodejs20.x"
-                }
+                print ""
+                print "app:"
+                print "  runtime:"
+                print "    name: nodejs20.x"
               }
             ' manifest.yml > manifest.tmp && mv manifest.tmp manifest.yml
           fi
 
           # Drop deprecated app.name if present
           perl -0777 -pe 's/\napp:\n(\s*name:.*\n)/\napp:\n/s' -i manifest.yml || true
-
-          echo "== After =="
-          sed -n '1,220p' manifest.yml || true
 
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
@@ -96,25 +91,41 @@ jobs:
         working-directory: app
         run: forge deploy --environment development
 
-      # REQUIRED: install/upgrade on Confluence
+      # Confluence: install-or-upgrade
       - name: Install on Confluence (development)
         working-directory: app
+        shell: bash
         run: |
+          set -e
           forge install \
-            --product confluence \
-            --site "$ATLASSIAN_SITE" \
+            --product Confluence \
+            --site "$SITE_URL" \
+            --environment development \
+            --confirm-scopes \
+            --non-interactive \
+          || forge install \
+            --product Confluence \
+            --site "$SITE_URL" \
             --environment development \
             --upgrade \
             --confirm-scopes \
             --non-interactive
 
-      # REQUIRED: install/upgrade on Jira (for Jira scopes)
+      # Jira: install-or-upgrade (don’t force --upgrade first)
       - name: Install on Jira (development)
         working-directory: app
+        shell: bash
         run: |
+          set -e
           forge install \
-            --product jira \
-            --site "$ATLASSIAN_SITE" \
+            --product Jira \
+            --site "$SITE_URL" \
+            --environment development \
+            --confirm-scopes \
+            --non-interactive \
+          || forge install \
+            --product Jira \
+            --site "$SITE_URL" \
             --environment development \
             --upgrade \
             --confirm-scopes \

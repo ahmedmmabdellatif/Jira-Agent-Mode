@@ -1,0 +1,15 @@
+modules:
+  confluence:macro:
+    - key: jira-issues-clone
+      title: Jira Issues Clone
+      description: Replica of Jira “Issues/Filter” macro (foundation)
+      render: native
+      configurable: true
+      entryPoint: main
+app:
+  name: Jira Issues Clone (Agent Mode)
+permissions:
+  scopes:
+    - read:confluence-content.summary
+    - read:jira-work
+    - read:jira-user

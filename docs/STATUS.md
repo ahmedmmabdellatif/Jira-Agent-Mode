@@ -6,7 +6,10 @@ _Date: 2025-08-11_
 
 - Manifest verified: `app.id` matches `ari:cloud:ecosystem::app/4ac49331-5227-4060-bcdb-4d526677bc38` and runtime is `nodejs20.x`.
 - Entry file `app/src/frontend/index.jsx` exists.
-- Documentation structure created (RUNBOOK.md).
+- Documentation structure created (RUNBO
+- - State file `agent/state/currentFeatureIndex.json` created, tracking feature progress.
+- Iteration log created at `agent/logs/20250811-1410.md`.
+OK.md).
 
 ## Last successful CI run
 

@@ -1,4 +1,4 @@
-name: Forge CI/CD
+name: Forge CI/CD (self-healing)
 
 on:
   push:
@@ -9,12 +9,14 @@ concurrency:
   group: forge-cicd-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write   # allow CI to commit back the fixed manifest
+
 jobs:
   deploy-install:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
-      # Auth for Forge CLI via env (no `forge login` in CI)
       FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
       ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }}
@@ -31,13 +33,70 @@ jobs:
       - name: Install Forge CLI
         run: npm install -g @forge/cli@latest
 
-      - name: Disable Forge CLI analytics (prevents prompts in CI)
+      - name: Disable Forge CLI analytics (avoid non-TTY prompts)
         run: forge settings set usage-analytics false
+
+      - name: Ensure app.id and runtime in manifest (self-heal)
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f manifest.yml
+
+          echo "== Before =="
+          sed -n '1,120p' manifest.yml || true
+
+          # If app.id is missing, register and let Forge inject a real ID
+          if ! grep -qE '^\s*id:\s*ari:cloud:ecosystem::app/' manifest.yml; then
+            echo "No app.id found -> running 'forge register \"Jira Agent Mode\"'..."
+            forge register "Jira Agent Mode"
+          fi
+
+          # If runtime is missing, add nodejs20.x
+          if ! grep -qE '^\s*runtime:' manifest.yml; then
+            awk '
+              BEGIN{added=0}
+              /^app:/ {print; next}
+              /^[^[:space:]]/ && !added && seen_app { 
+                print "  runtime:"
+                print "    name: nodejs20.x"
+                added=1
+              }
+              { 
+                if ($0 ~ /^app:/) { seen_app=1 } 
+                print 
+              }
+              END{
+                if (!added) {
+                  # Append under app: if we didn'\''t manage above
+                }
+              }
+            ' manifest.yml > manifest.tmp && mv manifest.tmp manifest.yml
+            # If runtime still not present (app block might be at end), append safely
+            if ! grep -qE '^\s*runtime:' manifest.yml; then
+              printf "\n  runtime:\n    name: nodejs20.x\n" >> manifest.yml
+            fi
+          fi
+
+          echo "== After =="
+          sed -n '1,160p' manifest.yml || true
+
+          # Remove deprecated app.name if present (recommended by Forge validation)
+          perl -0777 -pe 's/\napp:\n(\s*name:.*\n)/\napp:\n/s' -i manifest.yml || true
+
+          # Commit changes if any
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add manifest.yml
+            git commit -m "ci: inject Forge app.id and runtime via CI self-heal"
+            git push
+          fi
 
       - name: Install dependencies (app)
         working-directory: app
         run: |
-          if [ -f package-lock.json ]; then npm ci; elif [ -f package.json ]; then npm i; else echo "No package.json found in /app yet"; fi
+          if [ -f package-lock.json ]; then npm ci; elif [ -f package.json ]; then npm i; else echo "No package.json found in /app"; fi
 
       - name: Lint (non-blocking)
         working-directory: app

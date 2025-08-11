@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # Forge CLI will read these automatically; no `forge login` needed
+      # Forge CLI reads these automatically; do not run `forge login` in CI
       FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}          # ahmed.m.m.abdellatif@hotmail.com
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}  # your new token (secret)
       ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }}    # jiraagentmode.atlassian.net
@@ -23,13 +23,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js (Forge requires current LTS)
+      - name: Set up Node.js (LTS)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install Forge CLI
         run: npm install -g @forge/cli
+
+      - name: Disable Forge CLI analytics (required for non-TTY CI)
+        run: forge settings set usage-analytics false
 
       - name: Install dependencies (app)
         working-directory: app

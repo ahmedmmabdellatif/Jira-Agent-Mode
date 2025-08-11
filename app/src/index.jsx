@@ -1,39 +1,39 @@
-import ForgeUI, {
-  render,
-  Macro,
-  MacroConfig,
-  TextField,
-  Text,
+import React from "react";
+import ForgeReconciler, {
+  Label,
   SectionMessage,
+  Stack,
+  Text,
+  Textfield,
   useConfig,
-} from "@forge/ui";
+} from "@forge/react";
 
 /**
- * Macro configuration shown in the right-hand panel while editing.
- * We collect a JQL string and a Max Results number. This is stored by Forge automatically.
+ * Macro configuration (right panel in editor)
  */
-const Config = () => (
-  <MacroConfig>
-    <TextField
-      name="jql"
-      label="JQL query"
-      description='Example: project = "Jira Agent Mode" ORDER BY created DESC'
-      isRequired={true}
-    />
-    <TextField
-      name="maxResults"
-      label="Max results"
-      description="How many issues to display (we'll cap/validate in code later)."
-      placeholder="50"
-    />
-  </MacroConfig>
-);
+const Config = () => {
+  return (
+    <Stack space="space.200">
+      <div>
+        <Label>JQL query</Label>
+        <Textfield
+          name="jql"
+          placeholder='e.g. project = "Jira Agent Mode" ORDER BY created DESC'
+          isRequired
+        />
+      </div>
+      <div>
+        <Label>Max results</Label>
+        <Textfield name="maxResults" placeholder="50" />
+      </div>
+    </Stack>
+  );
+};
 
 /**
- * Published view. For now we just render the saved config to prove install/render works.
- * Next steps will call Jira REST and render a real issues table to match the native macro.
+ * Macro view
  */
-const View = () => {
+const App = () => {
   const cfg = useConfig() || {};
   const jql = (cfg.jql || "").trim();
   const maxResults = (cfg.maxResults || "50").trim();
@@ -41,24 +41,26 @@ const View = () => {
   if (!jql) {
     return (
       <SectionMessage title="Jira Issues Clone">
-        <Text>Configure this macro: set a JQL query in the right panel.</Text>
+        <Text>Set a JQL query in the macro config.</Text>
       </SectionMessage>
     );
   }
 
   return (
-    <>
+    <Stack space="space.200">
       <Text>
         <strong>JQL:</strong> {jql}
       </Text>
       <Text>
         <strong>Max results:</strong> {maxResults}
       </Text>
-      <SectionMessage title="Status">
-        <Text>Macro installed and rendering. Data fetch & full UI come next.</Text>
+      <SectionMessage appearance="information" title="Status">
+        <Text>Macro installed and rendering via @forge/react. Data fetch & full table come next.</Text>
       </SectionMessage>
-    </>
+    </Stack>
   );
 };
 
-export const run = render(<Macro app={<View />} config={<Config />} />);
+// Register UI Kit render + config for the macro
+ForgeReconciler.render(<App />);
+ForgeReconciler.addConfig(<Config />);

@@ -1,0 +1,59 @@
+name: Forge CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: forge-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Forge CLI
+        run: npm install -g @forge/cli
+
+      - name: Forge CLI Authentication
+        env:
+          FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }} # = ahmed.m.m.abdellatif@hotmail.com
+          FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }} # your NEW token (secret)
+        run: |
+          echo "$FORGE_API_TOKEN" | forge login --email "$FORGE_EMAIL" --no-prompt
+
+      - name: Install dependencies (app)
+        working-directory: app
+        run: |
+          if [ -f package-lock.json ]; then npm ci; elif [ -f package.json ]; then npm i; else echo "No package.json found in /app yet"; fi
+
+      - name: Lint (non-blocking)
+        working-directory: app
+        run: forge lint || echo "lint warnings, continuing"
+
+      - name: Deploy to development
+        working-directory: app
+        run: forge deploy --environment development
+
+      - name: Install on Confluence (development)
+        working-directory: app
+        env:
+          ATLASSIAN_SITE: ${{ secrets.ATLASSIAN_SITE }} # = jiraagentmode.atlassian.net
+        run: |
+          forge install \
+            --product confluence \
+            --site "$ATLASSIAN_SITE" \
+            --environment development \
+            --confirm-scopes \
+            --non-interactive

@@ -8,14 +8,13 @@ modules:
       resolver:
         function: resolver
       config: true
+  function:
+    - key: resolver
+      handler: index.handler
 
 resources:
   - key: main
     path: src/frontend/index.jsx
-
-    function:
-        - key: resolver
-      handler: index.handler
 
 app:
   id: ari:cloud:ecosystem::app/4ac49331-5227-4060-bcdb-4d526677bc38

@@ -38,10 +38,10 @@ const App = () => {
   return (
     <>
       <Text>
-        <strong>JQL:</strong> {jql}
+        JQL:
       </Text>
       <Text>
-        <strong>Max results:</strong> {maxResults}
+        <Max results:
       </Text>
       <SectionMessage appearance="information" title="Status">
         <Text>UI Kit React is rendering. Data table comes next.</Text>

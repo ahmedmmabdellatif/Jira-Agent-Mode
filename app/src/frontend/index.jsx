@@ -11,9 +11,6 @@ import ForgeReconciler, {
   Cell,
   Body,
 } from "@forge/react";
-
-import Resolver from '@forge/resolver';
-import api from '@forge/api';
 import { invoke } from '@forge/bridge';
 
 /** Macro configuration UI (allowed components only — no Stack) */
@@ -29,29 +26,6 @@ const Config = () => (
     <Textfield name="maxResults" placeholder="50" />
   </>
 );
-
-/** Resolver to fetch issues */
-const resolver = new Resolver();
-
-resolver.define('fetchIssues', async ({ payload }) => {
-  const { jql, maxResults } = payload;
-  const res = await api.asUser().requestJira(`/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`);
-  if (!res.ok) {
-    throw new Error(`Request failed with status ${res.status}`);
-  }
-  const data = await res.json();
-  const issues = data.issues.map(issue => ({
-    key: issue.key,
-    summary: issue.fields.summary,
-    status: issue.fields.status?.name || '',
-    assignee: issue.fields.assignee?.displayName || 'Unassigned',
-    priority: issue.fields.priority?.name || '',
-    updated: issue.fields.updated,
-  }));
-  return issues;
-});
-
-export const handler = resolver.getDefinitions();
 
 /** Macro view */
 const App = () => {

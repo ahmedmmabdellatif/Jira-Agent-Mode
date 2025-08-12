@@ -4,15 +4,16 @@ modules:
       title: Jira Issues Clone
       description: Replica of Jira "Issues/Filter"
       resource: main
-      resolver: resolver
       render: native
+      resolver:
+        function: resolver
       config: true
 
 resources:
   - key: main
     path: src/frontend/index.jsx
 
-functions:
+function:
   - key: resolver
     handler: index.handler
 

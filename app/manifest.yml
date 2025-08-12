@@ -2,14 +2,19 @@ modules:
   macro:
     - key: jira-issues-clone
       title: Jira Issues Clone
-      description: Replica of Jira “Issues/Filter”
+      description: Replica of Jira "Issues/Filter"
       resource: main
+      resolver: resolver
       render: native
       config: true
 
 resources:
   - key: main
     path: src/frontend/index.jsx
+
+functions:
+  - key: resolver
+    handler: index.handler
 
 app:
   id: ari:cloud:ecosystem::app/4ac49331-5227-4060-bcdb-4d526677bc38

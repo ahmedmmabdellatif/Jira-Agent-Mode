@@ -2,27 +2,23 @@ import React from "react";
 import ForgeReconciler, {
   Label,
   SectionMessage,
-  Stack,
   Text,
   Textfield,
   useConfig,
 } from "@forge/react";
 
-/** Macro configuration UI (opens when configuring the macro) */
+/** Macro configuration UI (allowed components only — no Stack) */
 const Config = () => (
-  <Stack space="space.200">
-    <div>
-      <Label>JQL query</Label>
-      <Textfield
-        name="jql"
-        placeholder='e.g. project = "Jira Agent Mode" ORDER BY created DESC'
-      />
-    </div>
-    <div>
-      <Label>Max results</Label>
-      <Textfield name="maxResults" placeholder="50" />
-    </div>
-  </Stack>
+  <>
+    <Label>JQL query</Label>
+    <Textfield
+      name="jql"
+      placeholder='e.g. project = "Jira Agent Mode" ORDER BY created DESC'
+      isRequired
+    />
+    <Label>Max results</Label>
+    <Textfield name="maxResults" placeholder="50" />
+  </>
 );
 
 /** Macro view */
@@ -40,7 +36,7 @@ const App = () => {
   }
 
   return (
-    <Stack space="space.200">
+    <>
       <Text>
         <strong>JQL:</strong> {jql}
       </Text>
@@ -50,10 +46,10 @@ const App = () => {
       <SectionMessage appearance="information" title="Status">
         <Text>UI Kit React is rendering. Data table comes next.</Text>
       </SectionMessage>
-    </Stack>
+    </>
   );
 };
 
-// Register UI + config with UI Kit (Forge React)
+// Register UI + config
 ForgeReconciler.render(<App />);
 ForgeReconciler.addConfig(<Config />);

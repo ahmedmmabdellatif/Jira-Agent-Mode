@@ -45,8 +45,8 @@ jobs:
             fi
           }
           write_if "${{ github.event.inputs.frontend_b64 }}" "app/src/frontend/index.jsx"
-          write_if "${{ github.event.inputs.backend_b64 }}" "app/src/backend/index.js"
-          write_if "${{ github.event.inputs.package_b64 }}" "app/package.json"
+          write_if "${{ github.event.inputs.backend_b64 }}"  "app/src/backend/index.js"
+          write_if "${{ github.event.inputs.package_b64 }}"  "app/package.json"
           write_if "${{ github.event.inputs.manifest_b64 }}" "app/manifest.yml"
           if [ "$changed" -eq 0 ]; then
             echo "No inputs provided"; exit 1

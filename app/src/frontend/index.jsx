@@ -37,12 +37,11 @@ const App = () => {
   const cfg = useConfig() || {};
   const jql = (cfg.jql || "").trim();
   const maxResults = (cfg.maxResults || "50").trim();
-
   const [state, setState] = useState({ loading: false, error: "", items: [], total: 0 });
 
   useEffect(() => {
     let active = true;
-    const runFetch = async () => {
+    const run = async () => {
       if (!jql) return;
       setState((s) => ({ ...s, loading: true, error: "" }));
       try {
@@ -55,7 +54,7 @@ const App = () => {
             loading: false,
             error: "",
             items: res.issues || [],
-            total: res.total || 0,
+            total: res.total || 0
           });
         }
       } catch (e) {
@@ -64,11 +63,11 @@ const App = () => {
           loading: false,
           error: `Invoke failed: ${String(e).slice(0, 300)}`,
           items: [],
-          total: 0,
+          total: 0
         });
       }
     };
-    runFetch();
+    run();
     return () => {
       active = false;
     };
@@ -106,6 +105,7 @@ const App = () => {
       </>
     );
   }
+
   const site = "jiraagentmode.atlassian.net";
   return (
     <>

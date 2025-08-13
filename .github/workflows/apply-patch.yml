@@ -23,10 +23,9 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Apply patches
+      - - uses: actions/checkout@v4
+         
+    
         shell: bash
         run: |
           set -euo pipefail

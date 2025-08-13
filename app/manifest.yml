@@ -10,7 +10,7 @@ modules:
       config: true
   function:
     - key: resolver
-      handler: index.handler
+      handler: src/backend/index.run
 
 resources:
   - key: main

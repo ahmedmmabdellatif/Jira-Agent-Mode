@@ -11,7 +11,7 @@ modules:
 
   function:
     - key: resolver
-      handler: src/backend/index.handler   # -> exports `handler` from index.js
+      handler: backend/index.handler   # <- path is relative to src/
 
 resources:
   - key: main

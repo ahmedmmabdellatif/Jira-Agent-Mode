@@ -1,5 +1,5 @@
 import Resolver from "@forge/resolver";
-import api from "@forge/api";
+import api, { route } from "@forge/api";
 
 const resolver = new Resolver();
 
@@ -12,12 +12,9 @@ resolver.define("searchIssues", async ({ payload }) => {
   const maxNum = Number.parseInt(maxRaw, 10);
   const cap = Math.max(1, Math.min(Number.isFinite(maxNum) ? maxNum : 50, 100));
 
-  const jql = encodeURIComponent(jqlRaw);
-  const url =
-    `/rest/api/3/search?jql=${jql}&maxResults=${cap}` +
-    `&fields=summary,status,assignee,priority,updated`;
-
-  const resp = await api.asUser().requestJira(url, {
+  // Use route for Jira API call
+  const searchRoute = route`/rest/api/3/search?jql=${jqlRaw}&maxResults=${cap}&fields=summary,status,assignee,priority,updated`;
+  const resp = await api.asUser().requestJira(searchRoute, {
     headers: { Accept: "application/json" },
   });
 

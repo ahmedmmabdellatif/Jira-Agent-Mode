@@ -1,5 +1,5 @@
 import Resolver from "@forge/resolver";
-import { api } from "@forge/api";
+import api from "@forge/api";
 
 const resolver = new Resolver();
 
@@ -45,4 +45,4 @@ resolver.define("searchIssues", async ({ payload }) => {
   return { total: typeof data.total === "number" ? data.total : issues.length, issues };
 });
 
-export const run = resolver.getDefinitions();
+export const handler = resolver.getDefinitions();
